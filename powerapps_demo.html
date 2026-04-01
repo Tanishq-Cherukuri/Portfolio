@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Apps — Loan Officer Portal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:#f3f2f1;color:#323130;font-size:13px;height:100vh;overflow:hidden;}
+.app-shell{display:grid;grid-template-rows:48px 1fr;height:100vh;}
+/* TOP BAR */
+.topbar{background:#742774;display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.app-icon{width:28px;height:28px;background:rgba(255,255,255,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.app-name{color:#fff;font-size:14px;font-weight:600;}
+.app-env{color:rgba(255,255,255,0.6);font-size:11px;margin-left:6px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.tb-link{color:rgba(255,255,255,0.7);font-size:11px;cursor:pointer;}
+.tb-link:hover{color:#fff;}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:#c77dff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;}
+/* MAIN */
+.main{display:grid;grid-template-columns:220px 1fr;overflow:hidden;}
+/* SIDEBAR */
+.sidebar{background:#fff;border-right:1px solid #e1dfdd;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar-header{padding:16px 16px 8px;border-bottom:1px solid #f3f2f1;}
+.sidebar-title{font-size:12px;font-weight:600;color:#323130;}
+.sidebar-sub{font-size:10px;color:#605e5c;margin-top:2px;}
+.nav-section{padding:8px 0;}
+.nav-label{font-size:10px;font-weight:700;color:#a19f9d;text-transform:uppercase;letter-spacing:.06em;padding:6px 16px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;font-size:12px;color:#323130;transition:background .15s;}
+.nav-item:hover{background:#f3f2f1;}
+.nav-item.active{background:#ede0f5;color:#742774;font-weight:600;}
+.nav-icon{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:#742774;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;}
+/* CONTENT */
+.content{overflow-y:auto;padding:20px 24px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:18px;font-weight:600;color:#323130;}
+.page-sub{font-size:12px;color:#605e5c;margin-top:2px;}
+.header-actions{display:flex;gap:8px;}
+.btn-primary{background:#742774;color:#fff;border:none;border-radius:3px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.btn-secondary{background:#fff;color:#323130;border:1px solid #8a8886;border-radius:3px;padding:7px 14px;font-size:12px;cursor:pointer;}
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border:1px solid #e1dfdd;border-radius:4px;padding:14px 16px;}
+.stat-val{font-size:22px;font-weight:300;color:#323130;line-height:1;}
+.stat-lbl{font-size:10px;color:#a19f9d;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.stat-trend{font-size:10px;margin-top:5px;}
+.trend-up{color:#107c10;} .trend-dn{color:#d13438;}
+/* FORM CARD */
+.section-card{background:#fff;border:1px solid #e1dfdd;border-radius:4px;margin-bottom:16px;}
+.card-header{padding:12px 16px;border-bottom:1px solid #f3f2f1;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:13px;font-weight:600;color:#323130;}
+.card-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.badge-new{background:#dff6dd;color:#107c10;}
+.badge-prog{background:#fff4ce;color:#7a5d00;}
+.badge-rev{background:#deecf9;color:#004578;}
+.card-body{padding:16px;}
+/* FORM GRID */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:11px;font-weight:600;color:#323130;}
+.form-input{border:1px solid #8a8886;border-radius:3px;padding:6px 10px;font-size:12px;color:#323130;background:#fff;outline:none;}
+.form-input:focus{border-color:#742774;box-shadow:0 0 0 1px #742774;}
+.form-select{border:1px solid #8a8886;border-radius:3px;padding:6px 10px;font-size:12px;color:#323130;background:#fff;outline:none;width:100%;}
+.form-hint{font-size:10px;color:#a19f9d;}
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{font-size:10px;font-weight:700;color:#605e5c;text-align:left;padding:8px 10px;border-bottom:2px solid #e1dfdd;background:#faf9f8;text-transform:uppercase;letter-spacing:.04em;}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f3f2f1;color:#323130;}
+.data-table tr:hover td{background:#faf9f8;}
+.status-pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600;}
+.s-green{background:#dff6dd;color:#107c10;} .s-yellow{background:#fff4ce;color:#7a5d00;}
+.s-blue{background:#deecf9;color:#004578;} .s-red{background:#fde7e9;color:#a4262c;}
+/* PROGRESS */
+.progress-track{height:6px;background:#f3f2f1;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:#742774;}
+/* FLOW INDICATOR */
+.flow{display:flex;align-items:center;gap:0;margin-bottom:16px;}
+.flow-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.flow-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid;}
+.flow-done{background:#107c10;border-color:#107c10;color:#fff;}
+.flow-active{background:#742774;border-color:#742774;color:#fff;}
+.flow-pending{background:#fff;border-color:#e1dfdd;color:#a19f9d;}
+.flow-line{height:2px;flex:1;margin-top:-24px;}
+.flow-lbl{font-size:9px;color:#605e5c;text-align:center;max-width:60px;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="app-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="1" width="6" height="6" rx="1" fill="#fff" opacity=".9"/>
+          <rect x="9" y="1" width="6" height="6" rx="1" fill="#fff" opacity=".7"/>
+          <rect x="1" y="9" width="6" height="6" rx="1" fill="#fff" opacity=".7"/>
+          <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" opacity=".9"/>
+        </svg>
+      </div>
+      <span class="app-name">Power Apps</span>
+      <span class="app-env">Loan Officer Portal · Caliber Home Loans</span>
+    </div>
+    <div class="topbar-right">
+      <span class="tb-link">⚙ Settings</span>
+      <span class="tb-link">? Help</span>
+      <div class="user-avatar">TC</div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Loan Officer Portal</div>
+        <div class="sidebar-sub">Connected to Snowflake + Azure SQL</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <div class="nav-item active"><div class="nav-icon">🏠</div>Dashboard<span class="nav-badge">5</span></div>
+        <div class="nav-item"><div class="nav-icon">📝</div>New Application</div>
+        <div class="nav-item"><div class="nav-icon">📋</div>My Pipeline<span class="nav-badge" style="background:#e8730a;">12</span></div>
+        <div class="nav-item"><div class="nav-icon">🔍</div>Loan Status</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Management</div>
+        <div class="nav-item"><div class="nav-icon">📊</div>Performance</div>
+        <div class="nav-item"><div class="nav-icon">📁</div>Documents</div>
+        <div class="nav-item"><div class="nav-icon">✅</div>Compliance</div>
+        <div class="nav-item"><div class="nav-icon">🔔</div>Alerts<span class="nav-badge" style="background:#d13438;">3</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Tools</div>
+        <div class="nav-item"><div class="nav-icon">🤖</div>AI Assistant</div>
+        <div class="nav-item"><div class="nav-icon">📈</div>BI Reports</div>
+        <div class="nav-item"><div class="nav-icon">⚙</div>Settings</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Loan Officer Dashboard</div>
+          <div class="page-sub">Real-time data from Snowflake · Last synced 2 min ago via Azure SQL connector</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-secondary">⬇ Export</button>
+          <button class="btn-primary">+ New Application</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val">$28.4M</div>
+          <div class="stat-lbl">Pipeline Value</div>
+          <div class="stat-trend"><span class="trend-up">▲ 14%</span> vs last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">47</div>
+          <div class="stat-lbl">Active Applications</div>
+          <div class="stat-trend"><span class="trend-up">▲ 6</span> new this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">94.2%</div>
+          <div class="stat-lbl">Close Rate</div>
+          <div class="stat-trend"><span class="trend-up">▲ 2.1%</span> vs target</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">18 days</div>
+          <div class="stat-lbl">Avg. Processing Time</div>
+          <div class="stat-trend"><span class="trend-up">▼ 3 days</span> improvement</div>
+        </div>
+      </div>
+
+      <!-- LOAN SUBMISSION FORM -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">Submit Loan Status Update</div>
+          <span class="card-badge badge-new">Replaces Spreadsheet Workflow</span>
+        </div>
+        <div class="card-body">
+          <!-- WORKFLOW STEPS -->
+          <div class="flow" style="margin-bottom:20px;">
+            <div class="flow-step"><div class="flow-circle flow-done">✓</div><div class="flow-lbl">Application Received</div></div>
+            <div class="flow-line" style="background:#107c10;margin-bottom:0;"></div>
+            <div class="flow-step"><div class="flow-circle flow-done">✓</div><div class="flow-lbl">Credit Review</div></div>
+            <div class="flow-line" style="background:#107c10;"></div>
+            <div class="flow-step"><div class="flow-circle flow-active">3</div><div class="flow-lbl">Underwriting</div></div>
+            <div class="flow-line" style="background:#e1dfdd;"></div>
+            <div class="flow-step"><div class="flow-circle flow-pending">4</div><div class="flow-lbl">Appraisal</div></div>
+            <div class="flow-line" style="background:#e1dfdd;"></div>
+            <div class="flow-step"><div class="flow-circle flow-pending">5</div><div class="flow-lbl">Closing</div></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Loan ID</label><input class="form-input" value="CLB-2024-08821" readonly style="background:#faf9f8;color:#605e5c;"></div>
+            <div class="form-group"><label class="form-label">Borrower Name</label><input class="form-input" value="Sarah J. Thompson"></div>
+            <div class="form-group"><label class="form-label">Loan Amount</label><input class="form-input" value="$485,000"></div>
+            <div class="form-group"><label class="form-label">Loan Type</label><select class="form-select"><option>Conventional 30-yr Fixed</option><option>FHA</option><option>VA</option><option>Jumbo</option></select></div>
+            <div class="form-group"><label class="form-label">Current Stage</label><select class="form-select"><option>Underwriting</option><option>Credit Review</option><option>Appraisal</option><option>Closing</option></select></div>
+            <div class="form-group"><label class="form-label">Expected Close Date</label><input class="form-input" type="date" value="2024-11-15"></div>
+            <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Notes / Status Update</label><input class="form-input" value="Appraisal ordered — awaiting inspector confirmation. All docs received."><div class="form-hint">This updates Snowflake in near real-time and flows to Power BI compliance dashboard.</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn-primary">Save & Sync to Snowflake</button>
+            <button class="btn-secondary">Save Draft</button>
+            <button class="btn-secondary" style="margin-left:auto;">Request Docs via Power Automate →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIPELINE TABLE -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">My Active Pipeline</div>
+          <span class="card-badge badge-prog">Live from Snowflake</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead><tr><th>Loan ID</th><th>Borrower</th><th>Amount</th><th>Type</th><th>Stage</th><th>Progress</th><th>Close Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>CLB-2024-08821</td><td>Thompson, S.</td><td>$485K</td><td>Conventional</td><td>Underwriting</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-track" style="width:80px;"><div class="progress-fill" style="width:60%;"></div></div><span style="font-size:10px;color:#605e5c;">60%</span></div></td><td>Nov 15</td><td><span class="status-pill s-yellow">In Progress</span></td></tr>
+              <tr><td>CLB-2024-08744</td><td>Martinez, R.</td><td>$312K</td><td>FHA</td><td>Appraisal</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-track" style="width:80px;"><div class="progress-fill" style="width:80%;"></div></div><span style="font-size:10px;color:#605e5c;">80%</span></div></td><td>Nov 8</td><td><span class="status-pill s-blue">Review</span></td></tr>
+              <tr><td>CLB-2024-08691</td><td>Chen, W.</td><td>$920K</td><td>Jumbo</td><td>Closing</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-track" style="width:80px;"><div class="progress-fill" style="width:95%;"></div></div><span style="font-size:10px;color:#605e5c;">95%</span></div></td><td>Nov 3</td><td><span class="status-pill s-green">Ready</span></td></tr>
+              <tr><td>CLB-2024-08612</td><td>Patel, A.</td><td>$275K</td><td>VA</td><td>Credit Review</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-track" style="width:80px;"><div class="progress-fill" style="width:30%;"></div></div><span style="font-size:10px;color:#605e5c;">30%</span></div></td><td>Dec 1</td><td><span class="status-pill s-yellow">In Progress</span></td></tr>
+              <tr><td>CLB-2024-08580</td><td>Davis, M.</td><td>$198K</td><td>FHA</td><td>Underwriting</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-track" style="width:80px;"><div class="progress-fill" style="width:55%;background:#d13438;"></div></div><span style="font-size:10px;color:#605e5c;">55%</span></div></td><td>Nov 20</td><td><span class="status-pill s-red">Delayed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
