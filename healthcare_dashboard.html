@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Analytics — Power BI Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: #f0f2f5;
+    color: #252423;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: #1b1a19;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 40px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .pbi-logo { display: flex; align-items: center; gap: 6px; }
+  .pbi-icon { width: 20px; height: 20px; }
+  .pbi-name { color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0.01em; }
+  .report-title { color: #a19f9d; font-size: 12px; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .tb-btn { color: #a19f9d; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .tb-btn:hover { color: #fff; }
+  .share-btn {
+    background: #0078d4; color: #fff; border: none; border-radius: 2px;
+    padding: 4px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+
+  /* RIBBON */
+  .ribbon {
+    background: #fff; border-bottom: 1px solid #e1dfdd;
+    padding: 6px 16px; display: flex; align-items: center; gap: 24px;
+  }
+  .ribbon-tab {
+    font-size: 11px; font-weight: 600; color: #605e5c; cursor: pointer;
+    padding: 2px 4px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .ribbon-tab.active { color: #0078d4; border-bottom: 2px solid #0078d4; }
+  .filters-bar {
+    background: #fff; border-bottom: 1px solid #e1dfdd;
+    padding: 6px 16px; display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 11px; color: #605e5c; font-weight: 600; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f3f2f1; border: 1px solid #e1dfdd; border-radius: 2px;
+    padding: 2px 8px; font-size: 11px; color: #252423; cursor: pointer;
+  }
+  .filter-chip select {
+    border: none; background: transparent; font-size: 11px; color: #252423;
+    outline: none; cursor: pointer;
+  }
+  .refresh-info { margin-left: auto; font-size: 10px; color: #a19f9d; }
+
+  /* CANVAS */
+  .canvas {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+    min-height: calc(100vh - 120px);
+  }
+
+  /* VISUALS */
+  .visual {
+    background: #fff; border: 1px solid #e1dfdd;
+    border-radius: 2px; padding: 10px 14px;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .visual:hover { border-color: #0078d4; box-shadow: 0 0 0 1px #0078d4; }
+  .visual-title {
+    font-size: 11px; font-weight: 600; color: #252423;
+    margin-bottom: 4px; letter-spacing: 0.01em;
+  }
+  .visual-subtitle { font-size: 10px; color: #a19f9d; margin-bottom: 8px; }
+  .visual-menu {
+    position: absolute; top: 6px; right: 8px;
+    display: none; gap: 6px;
+  }
+  .visual:hover .visual-menu { display: flex; }
+  .vm-btn {
+    width: 18px; height: 18px; border-radius: 2px; background: #f3f2f1;
+    border: none; cursor: pointer; font-size: 10px; color: #605e5c;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* KPI CARDS */
+  .kpi-row {
+    grid-column: 1 / -1;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  }
+  .kpi { background: #fff; border: 1px solid #e1dfdd; border-radius: 2px; padding: 14px 16px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .kpi.blue::before   { background: #0078d4; }
+  .kpi.teal::before   { background: #00b7c3; }
+  .kpi.orange::before { background: #e9730c; }
+  .kpi.green::before  { background: #107c10; }
+  .kpi-label { font-size: 10px; color: #a19f9d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .kpi-value { font-size: 26px; font-weight: 300; color: #252423; line-height: 1; }
+  .kpi-delta { margin-top: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+  .delta-up { color: #107c10; } .delta-down { color: #d13438; }
+  .kpi-spark { margin-top: 8px; height: 28px; }
+
+  /* CHART AREAS */
+  .chart-area { flex: 1; position: relative; min-height: 160px; }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    font-size: 10px; font-weight: 600; color: #605e5c; text-align: left;
+    padding: 4px 6px; border-bottom: 1px solid #e1dfdd; background: #faf9f8;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .data-table td { font-size: 11px; padding: 5px 6px; border-bottom: 1px solid #f3f2f1; color: #252423; }
+  .data-table tr:hover td { background: #f3f2f1; }
+  .status-pill {
+    display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  }
+  .pill-green { background: #dff6dd; color: #107c10; }
+  .pill-yellow { background: #fff4ce; color: #7a5d00; }
+  .pill-red { background: #fde7e9; color: #a4262c; }
+
+  /* BAR SPARK */
+  .spark-bars { display: flex; align-items: flex-end; gap: 2px; height: 28px; }
+  .spark-bar { flex: 1; border-radius: 1px 1px 0 0; }
+
+  /* SLICER */
+  .slicer-list { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+  .slicer-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: #252423; cursor: pointer; padding: 3px 4px; border-radius: 2px;
+  }
+  .slicer-item:hover { background: #f3f2f1; }
+  .slicer-item input[type="checkbox"] { accent-color: #0078d4; width: 12px; height: 12px; }
+  .slicer-count { margin-left: auto; font-size: 10px; color: #a19f9d; }
+
+  /* DONUT LEGEND */
+  .donut-legend { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #252423; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { margin-left: auto; font-weight: 600; font-size: 11px; }
+
+  /* GAUGE */
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; justify-content: center; padding-top: 4px; }
+  .gauge-label { font-size: 10px; color: #a19f9d; margin-top: 4px; }
+  .gauge-value { font-size: 22px; font-weight: 300; color: #252423; }
+
+  /* PAGE TABS */
+  .page-tabs {
+    background: #fff; border-top: 1px solid #e1dfdd;
+    display: flex; align-items: center; padding: 0 16px; gap: 2px;
+    position: sticky; bottom: 0;
+  }
+  .page-tab {
+    padding: 6px 14px; font-size: 11px; color: #605e5c; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .page-tab.active { color: #0078d4; border-bottom-color: #0078d4; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="pbi-logo">
+      <svg class="pbi-icon" viewBox="0 0 20 20" fill="none">
+        <rect x="1" y="10" width="4" height="9" fill="#f2c811" rx="0.5"/>
+        <rect x="7" y="6" width="4" height="13" fill="#f2c811" rx="0.5" opacity="0.85"/>
+        <rect x="13" y="1" width="4" height="18" fill="#f2c811" rx="0.5" opacity="0.65"/>
+      </svg>
+      <span class="pbi-name">Power BI</span>
+    </div>
+    <span class="report-title">Healthcare Analytics — St. Jude Treatment & Cost Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <div class="tb-btn">⚙ Edit</div>
+    <div class="tb-btn">↗ Share</div>
+    <button class="share-btn">Export</button>
+  </div>
+</div>
+
+<!-- RIBBON -->
+<div class="ribbon">
+  <div class="ribbon-tab active">Report</div>
+  <div class="ribbon-tab">Data</div>
+  <div class="ribbon-tab">Model</div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <span class="filter-label">Filters:</span>
+  <div class="filter-chip">
+    <span>Fiscal Year:</span>
+    <select><option>FY 2024</option><option>FY 2023</option><option>All</option></select>
+  </div>
+  <div class="filter-chip">
+    <span>Department:</span>
+    <select><option>All Departments</option><option>Oncology</option><option>Neurology</option><option>Cardiology</option></select>
+  </div>
+  <div class="filter-chip">
+    <span>Patient Type:</span>
+    <select><option>All</option><option>Inpatient</option><option>Outpatient</option></select>
+  </div>
+  <span class="refresh-info">Last refreshed: Today 6:00 AM · Azure SQL + Databricks</span>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi blue">
+      <div class="kpi-label">Total Patients</div>
+      <div class="kpi-value">12,847</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 8.3%</span> <span style="color:#a19f9d">vs prior year</span></div>
+      <div class="kpi-spark">
+        <div class="spark-bars" id="spark1"></div>
+      </div>
+    </div>
+    <div class="kpi teal">
+      <div class="kpi-label">Avg Treatment Cost</div>
+      <div class="kpi-value">$28,410</div>
+      <div class="kpi-delta"><span class="delta-down">▼ 3.1%</span> <span style="color:#a19f9d">YoY</span></div>
+      <div class="kpi-spark">
+        <div class="spark-bars" id="spark2"></div>
+      </div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-label">Bed Utilization Rate</div>
+      <div class="kpi-value">87.4%</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 2.9%</span> <span style="color:#a19f9d">vs target 85%</span></div>
+      <div class="kpi-spark">
+        <div class="spark-bars" id="spark3"></div>
+      </div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">HIPAA Compliance Score</div>
+      <div class="kpi-value">99.2%</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 0.4%</span> <span style="color:#a19f9d">RLS enforced</span></div>
+      <div class="kpi-spark">
+        <div class="spark-bars" id="spark4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREATMENT COST TREND (wide) -->
+  <div class="visual" style="grid-column: 1 / 3; grid-row: 2;">
+    <div class="visual-title">Monthly Treatment Cost by Department</div>
+    <div class="visual-subtitle">Oncology · Neurology · Cardiology · Hematology</div>
+    <div class="visual-menu">
+      <button class="vm-btn">⋯</button>
+      <button class="vm-btn">⤢</button>
+    </div>
+    <div class="chart-area"><canvas id="costTrendChart"></canvas></div>
+  </div>
+
+  <!-- DEPT UTILIZATION DONUT -->
+  <div class="visual" style="grid-row: 2;">
+    <div class="visual-title">Dept. Patient Volume</div>
+    <div class="visual-subtitle">FY 2024 breakdown</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div class="chart-area" style="min-height:120px;"><canvas id="deptDonut"></canvas></div>
+    <div class="donut-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#0078d4"></div>Oncology<div class="legend-val">4,218</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00b7c3"></div>Neurology<div class="legend-val">3,105</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e9730c"></div>Cardiology<div class="legend-val">2,876</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#107c10"></div>Hematology<div class="legend-val">2,648</div></div>
+    </div>
+  </div>
+
+  <!-- DEPARTMENT SLICER -->
+  <div class="visual" style="grid-row: 2;">
+    <div class="visual-title">Department Filter</div>
+    <div class="visual-subtitle">Select to cross-filter</div>
+    <div class="slicer-list">
+      <div class="slicer-item"><input type="checkbox" checked> Oncology <span class="slicer-count">4,218</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> Neurology <span class="slicer-count">3,105</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> Cardiology <span class="slicer-count">2,876</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> Hematology <span class="slicer-count">2,648</span></div>
+      <div class="slicer-item"><input type="checkbox"> Radiology <span class="slicer-count">—</span></div>
+    </div>
+  </div>
+
+  <!-- PATIENT TABLE -->
+  <div class="visual" style="grid-column: 1 / 3; grid-row: 3;">
+    <div class="visual-title">Top Treatment Programs — Cost & Outcome Summary</div>
+    <div class="visual-subtitle">Filtered by active FY · DAX measures applied</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div style="overflow-x:auto; margin-top: 6px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Program</th><th>Dept</th><th>Patients</th><th>Avg Cost</th><th>Total Cost</th><th>Outcome Rate</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Pediatric Oncology Alpha</td><td>Oncology</td><td>1,204</td><td>$42,100</td><td>$50.7M</td><td>91.2%</td><td><span class="status-pill pill-green">On Track</span></td></tr>
+          <tr><td>Neuro Rehab Protocol B</td><td>Neurology</td><td>876</td><td>$31,800</td><td>$27.9M</td><td>84.6%</td><td><span class="status-pill pill-green">On Track</span></td></tr>
+          <tr><td>Cardiac Intervention Suite</td><td>Cardiology</td><td>654</td><td>$58,200</td><td>$38.1M</td><td>78.3%</td><td><span class="status-pill pill-yellow">Watch</span></td></tr>
+          <tr><td>Hematology Stem Cell TX</td><td>Hematology</td><td>432</td><td>$124,500</td><td>$53.8M</td><td>88.9%</td><td><span class="status-pill pill-green">On Track</span></td></tr>
+          <tr><td>Immunotherapy Clinical Trial</td><td>Oncology</td><td>218</td><td>$86,400</td><td>$18.8M</td><td>65.1%</td><td><span class="status-pill pill-yellow">Watch</span></td></tr>
+          <tr><td>Pediatric Neurology Early</td><td>Neurology</td><td>189</td><td>$22,300</td><td>$4.2M</td><td>54.0%</td><td><span class="status-pill pill-red">At Risk</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BED UTILIZATION BAR -->
+  <div class="visual" style="grid-row: 3;">
+    <div class="visual-title">Bed Utilization by Floor</div>
+    <div class="visual-subtitle">% of capacity · FY 2024</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div class="chart-area"><canvas id="bedChart"></canvas></div>
+  </div>
+
+  <!-- COST GAUGE / MATRIX -->
+  <div class="visual" style="grid-row: 3;">
+    <div class="visual-title">Budget vs. Actual</div>
+    <div class="visual-subtitle">FY 2024 YTD</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div class="chart-area"><canvas id="budgetGauge"></canvas></div>
+    <div style="text-align:center; margin-top:6px;">
+      <div style="font-size:10px;color:#a19f9d">YTD Spend vs Budget</div>
+      <div style="font-size:18px;font-weight:300;color:#252423;">$193.5M / $215M</div>
+      <div style="font-size:10px;color:#107c10;font-weight:600;">▲ 10.0% remaining</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE TABS -->
+<div class="page-tabs">
+  <div class="page-tab active">Executive Summary</div>
+  <div class="page-tab">Treatment Detail</div>
+  <div class="page-tab">Cost Analysis</div>
+  <div class="page-tab">Compliance & Access</div>
+</div>
+
+<script>
+// Sparks
+function makeSpark(id, vals, color) {
+  const el = document.getElementById(id);
+  const max = Math.max(...vals);
+  vals.forEach(v => {
+    const b = document.createElement('div');
+    b.className = 'spark-bar';
+    b.style.height = Math.round((v/max)*100)+'%';
+    b.style.background = color;
+    b.style.opacity = 0.5 + (v/max)*0.5;
+    el.appendChild(b);
+  });
+}
+makeSpark('spark1',[80,85,88,92,87,95,100,98,102,108,112,115],'#0078d4');
+makeSpark('spark2',[105,102,100,98,96,95,97,93,91,90,88,87],'#00b7c3');
+makeSpark('spark3',[78,80,82,84,85,87,86,88,89,90,87,88],'#e9730c');
+makeSpark('spark4',[98,98.5,99,98.8,99.1,99.2,99.0,99.3,99.2,99.4,99.1,99.2],'#107c10');
+
+// Cost Trend
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+new Chart(document.getElementById('costTrendChart'), {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [
+      { label:'Oncology', data:[4.2,4.5,4.1,4.8,5.0,4.7,5.2,5.1,4.9,5.3,5.5,5.4], borderColor:'#0078d4', backgroundColor:'rgba(0,120,212,0.08)', tension:0.4, pointRadius:3, borderWidth:2, fill:true },
+      { label:'Neurology', data:[2.8,2.9,3.1,2.7,3.0,3.2,3.1,3.3,2.9,3.1,3.4,3.2], borderColor:'#00b7c3', backgroundColor:'rgba(0,183,195,0.06)', tension:0.4, pointRadius:3, borderWidth:2, fill:true },
+      { label:'Cardiology', data:[3.1,3.3,2.9,3.4,3.2,3.6,3.5,3.4,3.7,3.5,3.8,3.6], borderColor:'#e9730c', backgroundColor:'rgba(233,115,12,0.06)', tension:0.4, pointRadius:3, borderWidth:2, fill:true },
+      { label:'Hematology', data:[4.8,5.1,4.6,5.2,5.4,4.9,5.5,5.3,5.6,5.4,5.7,5.5], borderColor:'#107c10', backgroundColor:'rgba(16,124,16,0.06)', tension:0.4, pointRadius:3, borderWidth:2, fill:true },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size:10} } } }, scales:{ y:{ ticks:{ font:{size:10}, callback: v => '$'+v+'M' }, grid:{ color:'#f3f2f1' } }, x:{ ticks:{ font:{size:10} }, grid:{ display:false } } } }
+});
+
+// Donut
+new Chart(document.getElementById('deptDonut'), {
+  type: 'doughnut',
+  data: {
+    labels:['Oncology','Neurology','Cardiology','Hematology'],
+    datasets:[{ data:[4218,3105,2876,2648], backgroundColor:['#0078d4','#00b7c3','#e9730c','#107c10'], borderWidth:0, hoverOffset:4 }]
+  },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{ legend:{display:false} } }
+});
+
+// Bed utilization
+new Chart(document.getElementById('bedChart'), {
+  type: 'bar',
+  data: {
+    labels:['Floor 1','Floor 2','Floor 3','Floor 4','Floor 5','Floor 6'],
+    datasets:[{
+      label:'Utilization %',
+      data:[92,88,85,91,78,87],
+      backgroundColor: d => d.raw >= 90 ? '#d13438' : d.raw >= 85 ? '#e9730c' : '#0078d4',
+      borderRadius: 2,
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ x:{ max:100, ticks:{ callback: v=>v+'%', font:{size:10} }, grid:{color:'#f3f2f1'} }, y:{ ticks:{font:{size:10}}, grid:{display:false} } }
+  }
+});
+
+// Budget gauge
+new Chart(document.getElementById('budgetGauge'), {
+  type: 'doughnut',
+  data: {
+    datasets:[{
+      data:[193.5, 21.5],
+      backgroundColor:['#0078d4','#f3f2f1'],
+      borderWidth:0,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'78%', rotation:-90, circumference:180,
+    plugins:{ legend:{display:false}, tooltip:{enabled:false} }
+  }
+});
+</script>
+</body>
+</html>

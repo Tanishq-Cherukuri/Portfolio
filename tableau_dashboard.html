@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau — Enterprise Pricing & Sales Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:#f0eeea;color:#333;font-size:13px;}
+.topbar{background:#1f3864;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:44px;}
+.tab-name{color:#fff;font-size:13px;font-weight:700;} .tab-sub{color:#8bacd4;font-size:11px;margin-left:10px;}
+.tb-publish{background:#e8730a;color:#fff;border:none;border-radius:3px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;}
+.tb-btn{color:#8bacd4;font-size:11px;cursor:pointer;padding:4px 8px;}
+.toolbar{background:#fff;border-bottom:1px solid #ddd;padding:6px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.filter-select{font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:3px;color:#333;background:#fff;outline:none;}
+.tool-btn{padding:4px 8px;border-radius:3px;font-size:11px;color:#555;cursor:pointer;border:1px solid transparent;}
+.tool-btn.active{background:#e8f0fe;border-color:#4a86e8;color:#1a56db;}
+.tool-btn:hover{background:#f0f0f0;}
+.workspace{display:grid;grid-template-columns:180px 1fr;height:calc(100vh - 90px);}
+.sidebar{background:#fff;border-right:1px solid #e0e0e0;padding:12px;overflow-y:auto;}
+.sb-sec{margin-bottom:14px;}
+.sb-title{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.field-item{display:flex;align-items:center;gap:5px;padding:3px 5px;border-radius:2px;cursor:pointer;font-size:11px;color:#333;}
+.field-item:hover{background:#f5f5f5;}
+.fp{width:13px;height:13px;border-radius:2px;flex-shrink:0;font-size:7px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.fp.d{background:#4a86e8;color:#fff;} .fp.m{background:#34a853;color:#fff;} .fp.c{background:#e8730a;color:#fff;}
+.canvas{padding:12px;overflow-y:auto;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.kpi-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.kpi{background:#fff;border:1px solid #e0e0e0;border-radius:3px;padding:12px 14px;}
+.kpi-val{font-size:24px;font-weight:300;color:#1f3864;line-height:1;}
+.kpi-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.kpi-d{font-size:10px;margin-top:5px;} .up{color:#34a853;} .dn{color:#ea4335;}
+.viz{background:#fff;border:1px solid #e0e0e0;border-radius:3px;padding:10px 12px;position:relative;}
+.viz:hover{border-color:#4a86e8;box-shadow:0 1px 6px rgba(74,134,232,.12);}
+.viz-title{font-size:11px;font-weight:700;color:#1f3864;margin-bottom:1px;}
+.viz-sub{font-size:9px;color:#aaa;margin-bottom:8px;}
+.viz-menu{position:absolute;top:7px;right:8px;display:none;gap:3px;}
+.viz:hover .viz-menu{display:flex;}
+.vm-b{width:18px;height:18px;border-radius:2px;background:#f5f5f5;border:1px solid #e0e0e0;font-size:9px;color:#888;cursor:pointer;}
+.chart-a{height:190px;position:relative;} .chart-sm{height:140px;position:relative;}
+.leg{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
+.li{display:flex;align-items:center;gap:3px;font-size:9px;color:#555;}
+.ld{width:7px;height:7px;border-radius:50%;}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.tbl th{background:#f5f8ff;color:#1f3864;font-size:9px;font-weight:700;text-align:left;padding:4px 7px;border-bottom:2px solid #4a86e8;text-transform:uppercase;letter-spacing:.04em;}
+.tbl td{padding:4px 7px;border-bottom:1px solid #f0f0f0;}
+.tbl tr:hover td{background:#f9fbff;}
+.bc{display:flex;align-items:center;gap:5px;}
+.bm{height:7px;border-radius:1px;}
+.sheet-tabs{background:#e8e8e8;display:flex;align-items:flex-end;padding:0 16px;gap:2px;border-top:1px solid #ccc;}
+.stab{padding:5px 14px;font-size:11px;background:#d0d0d0;border-radius:3px 3px 0 0;cursor:pointer;color:#555;}
+.stab.active{background:#fff;color:#1f3864;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <svg width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#e8730a"/><rect x="10" y="3" width="4" height="18" fill="#fff" opacity=".9"/><rect x="3" y="10" width="18" height="4" fill="#fff" opacity=".9"/></svg>
+    <span class="tab-name">Tableau Desktop</span>
+    <span class="tab-sub">Enterprise Pricing & Sales Analytics · Uniquode Applications (2018–2022)</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="tb-btn">⟳ Refresh</span><span class="tb-btn">↗ Share</span>
+    <button class="tb-publish">Publish to Server</button>
+  </div>
+</div>
+<div class="toolbar">
+  <div class="tool-btn active">📊 Dashboard</div>
+  <div class="tool-btn">📈 Sales Trend</div>
+  <div class="tool-btn">🗺 Region Map</div>
+  <select class="filter-select"><option>Region: All</option><option>North</option><option>South</option><option>East</option><option>West</option></select>
+  <select class="filter-select"><option>FY 2022</option><option>FY 2021</option><option>FY 2020</option></select>
+  <select class="filter-select"><option>Category: All</option><option>Software</option><option>Electronics</option><option>Services</option></select>
+</div>
+<div class="workspace">
+  <div class="sidebar">
+    <div class="sb-sec"><div class="sb-title">Dimensions</div>
+      <div class="field-item"><div class="fp d">D</div>Region</div>
+      <div class="field-item"><div class="fp d">D</div>Category</div>
+      <div class="field-item"><div class="fp d">D</div>Sub-Category</div>
+      <div class="field-item"><div class="fp d">D</div>Product</div>
+      <div class="field-item"><div class="fp d">D</div>Order Date</div>
+      <div class="field-item"><div class="fp d">D</div>Customer Segment</div>
+    </div>
+    <div class="sb-sec"><div class="sb-title">Measures</div>
+      <div class="field-item"><div class="fp m">M</div>Sales</div>
+      <div class="field-item"><div class="fp m">M</div>Profit</div>
+      <div class="field-item"><div class="fp m">M</div>Quantity</div>
+      <div class="field-item"><div class="fp m">M</div>Discount</div>
+    </div>
+    <div class="sb-sec"><div class="sb-title">Calculated Fields</div>
+      <div class="field-item"><div class="fp c">C</div>YTD Sales</div>
+      <div class="field-item"><div class="fp c">C</div>Trailing 4W Avg</div>
+      <div class="field-item"><div class="fp c">C</div>Profit Ratio</div>
+      <div class="field-item"><div class="fp c">C</div>Price Index</div>
+    </div>
+  </div>
+  <div class="canvas">
+    <div class="dash-grid">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-val">$18.4M</div><div class="kpi-lbl">Total Sales YTD</div><div class="kpi-d"><span class="up">▲ 22.3%</span> vs prior year</div></div>
+        <div class="kpi"><div class="kpi-val">$5.2M</div><div class="kpi-lbl">Total Profit</div><div class="kpi-d"><span class="up">▲ 18.1%</span> YoY</div></div>
+        <div class="kpi"><div class="kpi-val">28.3%</div><div class="kpi-lbl">Profit Margin</div><div class="kpi-d"><span class="up">▲ 1.4pp</span> improvement</div></div>
+        <div class="kpi"><div class="kpi-val">94,218</div><div class="kpi-lbl">Units Sold</div><div class="kpi-d"><span class="dn">▼ 3.2%</span> vs target</div></div>
+        <div class="kpi"><div class="kpi-val">$195</div><div class="kpi-lbl">Avg Selling Price</div><div class="kpi-d"><span class="up">▲ 8.7%</span> pricing uplift</div></div>
+      </div>
+      <div class="viz" style="grid-column:1/3;">
+        <div class="viz-title">Monthly Sales vs. Trailing 4-Week Average & Profit</div>
+        <div class="viz-sub">Custom calculated fields · migrated from Qlik · refresh time improved ~50%</div>
+        <div class="viz-menu"><button class="vm-b">⋯</button><button class="vm-b">⤢</button></div>
+        <div class="chart-a"><canvas id="c1"></canvas></div>
+        <div class="leg"><div class="li"><div class="ld" style="background:#4a86e8"></div>Monthly Sales</div><div class="li"><div class="ld" style="background:#e8730a"></div>4W Rolling Avg</div><div class="li"><div class="ld" style="background:#34a853"></div>Profit</div></div>
+      </div>
+      <div class="viz">
+        <div class="viz-title">Sales by Region</div><div class="viz-sub">Geographic split FY2022</div>
+        <div class="chart-sm"><canvas id="c2"></canvas></div>
+        <div class="leg" style="margin-top:6px;"><div class="li"><div class="ld" style="background:#4a86e8"></div>West 34%</div><div class="li"><div class="ld" style="background:#e8730a"></div>East 28%</div><div class="li"><div class="ld" style="background:#34a853"></div>South 22%</div><div class="li"><div class="ld" style="background:#9c27b0"></div>North 16%</div></div>
+      </div>
+      <div class="viz">
+        <div class="viz-title">Revenue by Category</div><div class="viz-sub">Horizontal bar · sorted by revenue</div>
+        <div class="chart-a"><canvas id="c3"></canvas></div>
+      </div>
+      <div class="viz">
+        <div class="viz-title">Profit vs. Discount Scatter</div><div class="viz-sub">Color by region · trend line</div>
+        <div class="chart-a"><canvas id="c4"></canvas></div>
+      </div>
+      <div class="viz">
+        <div class="viz-title">Price Index (2020=100)</div><div class="viz-sub">Custom calc · quarterly trend</div>
+        <div class="chart-a"><canvas id="c5"></canvas></div>
+      </div>
+      <div class="viz" style="grid-column:1/-1;">
+        <div class="viz-title">Top Products — Sales Performance Detail (15+ dimension model)</div>
+        <div class="viz-sub">Star schema redesign · consistent business definitions · data latency reduced ~20%</div>
+        <div class="viz-menu"><button class="vm-b">⋯</button><button class="vm-b">⤢</button></div>
+        <table class="tbl"><thead><tr><th>Product</th><th>Category</th><th>Region</th><th>Sales</th><th>Profit</th><th>Margin</th><th>Units</th><th>Sales Bar</th></tr></thead>
+        <tbody>
+          <tr><td>Enterprise Suite Pro</td><td>Software</td><td>West</td><td>$2.84M</td><td>$1.02M</td><td>35.9%</td><td>1,204</td><td><div class="bc"><div class="bm" style="width:90px;background:#4a86e8;"></div></div></td></tr>
+          <tr><td>Analytics Platform X</td><td>Software</td><td>East</td><td>$2.31M</td><td>$780K</td><td>33.8%</td><td>876</td><td><div class="bc"><div class="bm" style="width:73px;background:#4a86e8;"></div></div></td></tr>
+          <tr><td>Cloud Storage Array</td><td>Electronics</td><td>North</td><td>$1.98M</td><td>$520K</td><td>26.3%</td><td>3,204</td><td><div class="bc"><div class="bm" style="width:63px;background:#e8730a;"></div></div></td></tr>
+          <tr><td>Managed Services Gold</td><td>Services</td><td>South</td><td>$1.72M</td><td>$690K</td><td>40.1%</td><td>654</td><td><div class="bc"><div class="bm" style="width:54px;background:#34a853;"></div></div></td></tr>
+          <tr><td>Network Infrastructure</td><td>Electronics</td><td>West</td><td>$1.44M</td><td>$288K</td><td>20.0%</td><td>2,876</td><td><div class="bc"><div class="bm" style="width:46px;background:#e8730a;"></div></div></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sheet-tabs">
+  <div class="stab active">Executive Dashboard</div><div class="stab">Sales Detail</div><div class="stab">Pricing Analysis</div><div class="stab">Regional Breakdown</div><div class="stab">+ Sheet</div>
+</div>
+<script>
+const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:M,datasets:[{label:'Sales',data:[1.2,1.35,1.28,1.52,1.48,1.61,1.55,1.72,1.68,1.84,1.79,1.92],backgroundColor:'rgba(74,134,232,0.7)',borderRadius:2,yAxisID:'y'},{label:'4W Avg',data:[1.1,1.18,1.24,1.34,1.41,1.52,1.54,1.59,1.65,1.71,1.76,1.83],type:'line',borderColor:'#e8730a',tension:0.4,pointRadius:3,borderWidth:2,fill:false,yAxisID:'y'},{label:'Profit',data:[0.32,0.38,0.34,0.44,0.42,0.48,0.45,0.51,0.49,0.55,0.52,0.57],type:'line',borderColor:'#34a853',backgroundColor:'rgba(52,168,83,0.07)',tension:0.4,pointRadius:2,borderWidth:1.5,fill:true,yAxisID:'y'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v+'M',font:{size:10}},grid:{color:'#f5f5f5'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+new Chart(document.getElementById('c2'),{type:'doughnut',data:{labels:['West','East','South','North'],datasets:[{data:[34,28,22,16],backgroundColor:['#4a86e8','#e8730a','#34a853','#9c27b0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['Enterprise SW','Managed Svcs','Cloud HW','Network','Field Svcs','Accessories'],datasets:[{data:[6.2,4.8,3.9,2.1,0.9,0.5],backgroundColor:['#4a86e8','#4a86e8','#e8730a','#e8730a','#34a853','#34a853'],borderRadius:2}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>'$'+v+'M',font:{size:9}},grid:{color:'#f5f5f5'}},y:{ticks:{font:{size:9}},grid:{display:false}}}}});
+const sc=[...Array(40)].map((_,i)=>({x:Math.random()*40,y:40-Math.random()*50+Math.random()*20}));
+new Chart(document.getElementById('c4'),{type:'scatter',data:{datasets:[{label:'West',data:sc.slice(0,10),backgroundColor:'rgba(74,134,232,0.6)',pointRadius:4},{label:'East',data:sc.slice(10,20),backgroundColor:'rgba(232,115,10,0.6)',pointRadius:4},{label:'South',data:sc.slice(20,30),backgroundColor:'rgba(52,168,83,0.6)',pointRadius:4},{label:'North',data:sc.slice(30),backgroundColor:'rgba(156,39,176,0.6)',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Discount %',font:{size:9}},ticks:{font:{size:9}}},y:{title:{display:true,text:'Profit %',font:{size:9}},ticks:{font:{size:9}}}}}});
+new Chart(document.getElementById('c5'),{type:'line',data:{labels:['Q1\'20','Q2\'20','Q3\'20','Q4\'20','Q1\'21','Q2\'21','Q3\'21','Q4\'21','Q1\'22','Q2\'22','Q3\'22','Q4\'22'],datasets:[{data:[100,103,105,108,110,114,117,121,126,130,135,141],borderColor:'#e8730a',backgroundColor:'rgba(232,115,10,0.07)',tension:0.4,fill:true,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:10}},grid:{color:'#f5f5f5'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+</script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Analytics — Power BI Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: #f0f2f5;
+    color: #252423;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: #1b1a19; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 40px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .pbi-name { color: #fff; font-size: 13px; font-weight: 600; }
+  .report-title { color: #a19f9d; font-size: 12px; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .tb-btn { color: #a19f9d; font-size: 11px; cursor: pointer; }
+  .share-btn { background:#0078d4; color:#fff; border:none; border-radius:2px; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer; }
+
+  .ribbon { background:#fff; border-bottom:1px solid #e1dfdd; padding:6px 16px; display:flex; align-items:center; gap:24px; }
+  .ribbon-tab { font-size:11px; font-weight:600; color:#605e5c; cursor:pointer; padding:2px 4px; letter-spacing:.04em; text-transform:uppercase; }
+  .ribbon-tab.active { color:#0078d4; border-bottom:2px solid #0078d4; }
+
+  .filters-bar { background:#fff; border-bottom:1px solid #e1dfdd; padding:6px 16px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .filter-label { font-size:11px; color:#605e5c; font-weight:600; }
+  .filter-chip { display:inline-flex; align-items:center; gap:6px; background:#f3f2f1; border:1px solid #e1dfdd; border-radius:2px; padding:2px 8px; font-size:11px; color:#252423; }
+  .filter-chip select { border:none; background:transparent; font-size:11px; color:#252423; outline:none; cursor:pointer; }
+  .refresh-info { margin-left:auto; font-size:10px; color:#a19f9d; }
+
+  .canvas { padding:12px 16px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; }
+
+  .visual { background:#fff; border:1px solid #e1dfdd; border-radius:2px; padding:10px 14px; display:flex; flex-direction:column; position:relative; }
+  .visual:hover { border-color:#0078d4; box-shadow:0 0 0 1px #0078d4; }
+  .visual-title { font-size:11px; font-weight:600; color:#252423; margin-bottom:4px; }
+  .visual-subtitle { font-size:10px; color:#a19f9d; margin-bottom:8px; }
+  .visual-menu { position:absolute; top:6px; right:8px; display:none; gap:6px; }
+  .visual:hover .visual-menu { display:flex; }
+  .vm-btn { width:18px; height:18px; border-radius:2px; background:#f3f2f1; border:none; cursor:pointer; font-size:10px; color:#605e5c; }
+
+  .kpi-row { grid-column:1/-1; display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .kpi { background:#fff; border:1px solid #e1dfdd; border-radius:2px; padding:14px 16px; position:relative; overflow:hidden; }
+  .kpi::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .kpi.blue::before { background:#0078d4; }
+  .kpi.amber::before { background:#f2c811; }
+  .kpi.red::before { background:#d13438; }
+  .kpi.green::before { background:#107c10; }
+  .kpi.purple::before { background:#8764b8; }
+  .kpi-label { font-size:10px; color:#a19f9d; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .kpi-value { font-size:24px; font-weight:300; color:#252423; line-height:1; }
+  .kpi-delta { margin-top:6px; font-size:11px; display:flex; align-items:center; gap:4px; }
+  .delta-up { color:#107c10; } .delta-down { color:#d13438; } .delta-warn { color:#7a5d00; }
+
+  .chart-area { flex:1; position:relative; min-height:150px; }
+
+  .data-table { width:100%; border-collapse:collapse; }
+  .data-table th { font-size:10px; font-weight:600; color:#605e5c; text-align:left; padding:4px 6px; border-bottom:1px solid #e1dfdd; background:#faf9f8; text-transform:uppercase; letter-spacing:.04em; }
+  .data-table td { font-size:11px; padding:5px 6px; border-bottom:1px solid #f3f2f1; color:#252423; }
+  .data-table tr:hover td { background:#f3f2f1; }
+  .status-pill { display:inline-block; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; }
+  .pill-green { background:#dff6dd; color:#107c10; }
+  .pill-yellow { background:#fff4ce; color:#7a5d00; }
+  .pill-red { background:#fde7e9; color:#a4262c; }
+  .pill-blue { background:#deecf9; color:#004578; }
+
+  .spark-bars { display:flex; align-items:flex-end; gap:2px; height:28px; }
+  .spark-bar { flex:1; border-radius:1px 1px 0 0; }
+
+  .matrix-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .matrix-table th { font-size:10px; font-weight:600; color:#605e5c; text-align:right; padding:3px 6px; border-bottom:1px solid #e1dfdd; background:#faf9f8; text-transform:uppercase; letter-spacing:.04em; }
+  .matrix-table th:first-child { text-align:left; }
+  .matrix-table td { padding:4px 6px; border-bottom:1px solid #f3f2f1; text-align:right; color:#252423; }
+  .matrix-table td:first-child { text-align:left; color:#605e5c; font-weight:600; }
+  .heat-high { background:#dff6dd; color:#107c10; font-weight:600; }
+  .heat-mid { background:#fff4ce; color:#7a5d00; }
+  .heat-low { background:#fde7e9; color:#a4262c; }
+
+  .slicer-list { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+  .slicer-item { display:flex; align-items:center; gap:8px; font-size:11px; color:#252423; cursor:pointer; padding:3px 4px; border-radius:2px; }
+  .slicer-item:hover { background:#f3f2f1; }
+  .slicer-item input[type="checkbox"] { accent-color:#0078d4; width:12px; height:12px; }
+  .slicer-count { margin-left:auto; font-size:10px; color:#a19f9d; }
+
+  .kpi-spark { margin-top:8px; height:28px; }
+
+  .page-tabs { background:#fff; border-top:1px solid #e1dfdd; display:flex; align-items:center; padding:0 16px; gap:2px; }
+  .page-tab { padding:6px 14px; font-size:11px; color:#605e5c; cursor:pointer; border-bottom:2px solid transparent; }
+  .page-tab.active { color:#0078d4; border-bottom-color:#0078d4; font-weight:600; }
+
+  .risk-bar-wrap { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:11px; }
+  .risk-label { width:80px; color:#605e5c; text-align:right; flex-shrink:0; }
+  .risk-bar-track { flex:1; background:#f3f2f1; border-radius:1px; height:12px; }
+  .risk-bar-fill { height:100%; border-radius:1px; }
+  .risk-pct { width:36px; text-align:right; color:#252423; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="1" y="10" width="4" height="9" fill="#f2c811" rx="0.5"/>
+        <rect x="7" y="6" width="4" height="13" fill="#f2c811" rx="0.5" opacity="0.85"/>
+        <rect x="13" y="1" width="4" height="18" fill="#f2c811" rx="0.5" opacity="0.65"/>
+      </svg>
+      <span class="pbi-name">Power BI</span>
+    </div>
+    <span class="report-title">Financial & Compliance Analytics — Caliber Home Loans · Loan Performance Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <div class="tb-btn">⚙ Edit</div>
+    <div class="tb-btn">↗ Share</div>
+    <button class="share-btn">Export</button>
+  </div>
+</div>
+
+<div class="ribbon">
+  <div class="ribbon-tab active">Report</div>
+  <div class="ribbon-tab">Data</div>
+  <div class="ribbon-tab">Model</div>
+</div>
+
+<div class="filters-bar">
+  <span class="filter-label">Filters:</span>
+  <div class="filter-chip"><span>Quarter:</span><select><option>Q4 2024</option><option>Q3 2024</option><option>YTD</option></select></div>
+  <div class="filter-chip"><span>Region:</span><select><option>All Regions</option><option>Southwest</option><option>Southeast</option><option>Northeast</option></select></div>
+  <div class="filter-chip"><span>Loan Type:</span><select><option>All</option><option>Conventional</option><option>FHA</option><option>VA</option><option>Jumbo</option></select></div>
+  <div class="filter-chip"><span>Risk Tier:</span><select><option>All</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+  <span class="refresh-info">Last refreshed: Today 5:30 AM · Snowflake + Azure SQL via ADF</span>
+</div>
+
+<div class="canvas">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi blue">
+      <div class="kpi-label">Total Loan Volume</div>
+      <div class="kpi-value">$4.82B</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 12.4%</span> <span style="color:#a19f9d">vs Q3</span></div>
+      <div class="kpi-spark"><div class="spark-bars" id="s1"></div></div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Active Loans</div>
+      <div class="kpi-value">38,214</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 6.2%</span> <span style="color:#a19f9d">QoQ</span></div>
+      <div class="kpi-spark"><div class="spark-bars" id="s2"></div></div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Delinquency Rate</div>
+      <div class="kpi-value">2.34%</div>
+      <div class="kpi-delta"><span class="delta-down">▼ 0.18%</span> <span style="color:#a19f9d">improvement</span></div>
+      <div class="kpi-spark"><div class="spark-bars" id="s3"></div></div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Avg Interest Rate</div>
+      <div class="kpi-value">6.87%</div>
+      <div class="kpi-delta"><span class="delta-warn">— 0.02%</span> <span style="color:#a19f9d">stable</span></div>
+      <div class="kpi-spark"><div class="spark-bars" id="s4"></div></div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Compliance Score</div>
+      <div class="kpi-value">97.8%</div>
+      <div class="kpi-delta"><span class="delta-up">▲ 0.3%</span> <span style="color:#a19f9d">audit-ready</span></div>
+      <div class="kpi-spark"><div class="spark-bars" id="s5"></div></div>
+    </div>
+  </div>
+
+  <!-- LOAN VOLUME TREND -->
+  <div class="visual" style="grid-column:1/3; grid-row:2;">
+    <div class="visual-title">Monthly Loan Origination Volume by Type</div>
+    <div class="visual-subtitle">Conventional · FHA · VA · Jumbo · Snowflake semantic model</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button><button class="vm-btn">⤢</button></div>
+    <div class="chart-area"><canvas id="loanTrend"></canvas></div>
+  </div>
+
+  <!-- RISK DISTRIBUTION -->
+  <div class="visual" style="grid-row:2;">
+    <div class="visual-title">Portfolio Risk Distribution</div>
+    <div class="visual-subtitle">By credit tier · RLS enforced</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div class="chart-area" style="min-height:100px;"><canvas id="riskDonut"></canvas></div>
+    <div style="margin-top:8px;">
+      <div class="risk-bar-wrap"><span class="risk-label">Low Risk</span><div class="risk-bar-track"><div class="risk-bar-fill" style="width:62%;background:#107c10;"></div></div><span class="risk-pct">62%</span></div>
+      <div class="risk-bar-wrap"><span class="risk-label">Medium</span><div class="risk-bar-track"><div class="risk-bar-fill" style="width:28%;background:#e9730c;"></div></div><span class="risk-pct">28%</span></div>
+      <div class="risk-bar-wrap"><span class="risk-label">High Risk</span><div class="risk-bar-track"><div class="risk-bar-fill" style="width:10%;background:#d13438;"></div></div><span class="risk-pct">10%</span></div>
+    </div>
+  </div>
+
+  <!-- LOAN TYPE SLICER -->
+  <div class="visual" style="grid-row:2;">
+    <div class="visual-title">Loan Type Filter</div>
+    <div class="visual-subtitle">Cross-filter all visuals</div>
+    <div class="slicer-list">
+      <div class="slicer-item"><input type="checkbox" checked> Conventional <span class="slicer-count">$2.91B</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> FHA <span class="slicer-count">$0.84B</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> VA <span class="slicer-count">$0.62B</span></div>
+      <div class="slicer-item"><input type="checkbox" checked> Jumbo <span class="slicer-count">$0.45B</span></div>
+      <div class="slicer-item"><input type="checkbox"> USDA <span class="slicer-count">—</span></div>
+    </div>
+  </div>
+
+  <!-- LOAN PERFORMANCE TABLE -->
+  <div class="visual" style="grid-column:1/3; grid-row:3;">
+    <div class="visual-title">Loan Performance by Region & Officer</div>
+    <div class="visual-subtitle">Row-level security applied · Snowflake secure views · Apache Airflow pipeline</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div style="overflow-x:auto; margin-top:6px;">
+      <table class="data-table">
+        <thead>
+          <tr><th>Region</th><th>Loan Officer</th><th>Volume</th><th>Loans</th><th>Avg Rate</th><th>Delinq. Rate</th><th>Close Rate</th><th>Compliance</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Southwest</td><td>Martinez, R.</td><td>$428M</td><td>3,412</td><td>6.72%</td><td>1.8%</td><td>94.2%</td><td>99.1%</td><td><span class="status-pill pill-green">Excellent</span></td></tr>
+          <tr><td>Southeast</td><td>Thompson, L.</td><td>$391M</td><td>3,204</td><td>6.91%</td><td>2.1%</td><td>91.8%</td><td>98.4%</td><td><span class="status-pill pill-green">Excellent</span></td></tr>
+          <tr><td>Northeast</td><td>Chen, W.</td><td>$356M</td><td>2,876</td><td>7.04%</td><td>2.9%</td><td>88.3%</td><td>97.2%</td><td><span class="status-pill pill-blue">Good</span></td></tr>
+          <tr><td>Midwest</td><td>Johnson, K.</td><td>$312M</td><td>2,541</td><td>6.88%</td><td>3.4%</td><td>85.6%</td><td>96.8%</td><td><span class="status-pill pill-yellow">Watch</span></td></tr>
+          <tr><td>Pacific</td><td>Patel, S.</td><td>$289M</td><td>2,104</td><td>7.12%</td><td>4.1%</td><td>82.1%</td><td>95.3%</td><td><span class="status-pill pill-yellow">Watch</span></td></tr>
+          <tr><td>Mountain</td><td>Davis, A.</td><td>$218M</td><td>1,688</td><td>6.95%</td><td>5.2%</td><td>76.4%</td><td>93.1%</td><td><span class="status-pill pill-red">At Risk</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DELINQUENCY TREND -->
+  <div class="visual" style="grid-row:3;">
+    <div class="visual-title">Delinquency Rate Trend</div>
+    <div class="visual-subtitle">12-month rolling · 30 / 60 / 90 day</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div class="chart-area"><canvas id="delinqChart"></canvas></div>
+  </div>
+
+  <!-- COMPLIANCE MATRIX -->
+  <div class="visual" style="grid-row:3;">
+    <div class="visual-title">Compliance Matrix</div>
+    <div class="visual-subtitle">By category · Audit Q4 2024</div>
+    <div class="visual-menu"><button class="vm-btn">⋯</button></div>
+    <div style="margin-top:6px; overflow-x:auto;">
+      <table class="matrix-table">
+        <thead><tr><th>Category</th><th>Score</th><th>Target</th><th>Δ</th></tr></thead>
+        <tbody>
+          <tr><td>TILA Disclosure</td><td class="heat-high">99.4%</td><td>98%</td><td class="heat-high">+1.4%</td></tr>
+          <tr><td>RESPA</td><td class="heat-high">98.8%</td><td>98%</td><td class="heat-high">+0.8%</td></tr>
+          <tr><td>Fair Lending</td><td class="heat-mid">97.1%</td><td>98%</td><td class="heat-low">-0.9%</td></tr>
+          <tr><td>Data Security</td><td class="heat-high">99.6%</td><td>99%</td><td class="heat-high">+0.6%</td></tr>
+          <tr><td>HMDA Reporting</td><td class="heat-mid">96.8%</td><td>98%</td><td class="heat-low">-1.2%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="page-tabs">
+  <div class="page-tab active">Executive Overview</div>
+  <div class="page-tab">Loan Portfolio</div>
+  <div class="page-tab">Risk & Delinquency</div>
+  <div class="page-tab">Compliance & Audit</div>
+  <div class="page-tab">Officer Performance</div>
+</div>
+
+<script>
+function makeSpark(id, vals, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...vals);
+  vals.forEach(v => {
+    const b = document.createElement('div');
+    b.className = 'spark-bar';
+    b.style.height = Math.round((v/max)*100)+'%';
+    b.style.background = color;
+    b.style.opacity = 0.45 + (v/max)*0.55;
+    el.appendChild(b);
+  });
+}
+makeSpark('s1',[3.8,4.0,4.1,4.3,4.0,4.4,4.5,4.6,4.7,4.5,4.8,5.0],'#0078d4');
+makeSpark('s2',[32,33,34,35,35,36,36,37,37,38,38,39],'#f2c811');
+makeSpark('s3',[3.2,3.1,2.9,2.8,2.9,2.7,2.6,2.5,2.5,2.4,2.4,2.3],'#d13438');
+makeSpark('s4',[7.1,7.0,7.0,6.9,6.9,6.9,6.8,6.9,6.9,6.9,6.8,6.9],'#107c10');
+makeSpark('s5',[97,97.1,97.3,97.4,97.5,97.5,97.6,97.6,97.7,97.7,97.8,97.8],'#8764b8');
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+new Chart(document.getElementById('loanTrend'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      { label:'Conventional', data:[240,248,255,262,258,270,268,275,280,278,290,295], backgroundColor:'#0078d4', stack:'s' },
+      { label:'FHA', data:[68,70,72,74,71,75,73,76,78,77,80,82], backgroundColor:'#00b7c3', stack:'s' },
+      { label:'VA', data:[48,50,52,53,51,55,54,56,58,57,60,62], backgroundColor:'#8764b8', stack:'s' },
+      { label:'Jumbo', data:[34,35,37,38,36,39,38,40,42,41,43,45], backgroundColor:'#f2c811', stack:'s' },
+    ]
+  },
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } }, scales:{ x:{ stacked:true, ticks:{font:{size:10}}, grid:{display:false} }, y:{ stacked:true, ticks:{ callback:v=>v+'M', font:{size:10} }, grid:{color:'#f3f2f1'} } } }
+});
+
+new Chart(document.getElementById('riskDonut'), {
+  type: 'doughnut',
+  data: {
+    labels:['Low','Medium','High'],
+    datasets:[{ data:[62,28,10], backgroundColor:['#107c10','#e9730c','#d13438'], borderWidth:0, hoverOffset:4 }]
+  },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'70%', plugins:{ legend:{display:false} } }
+});
+
+new Chart(document.getElementById('delinqChart'), {
+  type:'line',
+  data:{
+    labels: months,
+    datasets:[
+      { label:'30-day', data:[4.2,4.0,3.8,3.7,3.6,3.5,3.4,3.3,3.2,3.1,3.0,2.9], borderColor:'#e9730c', tension:0.4, pointRadius:2, borderWidth:2, fill:false },
+      { label:'60-day', data:[2.8,2.7,2.6,2.5,2.5,2.4,2.3,2.3,2.2,2.2,2.1,2.1], borderColor:'#d13438', tension:0.4, pointRadius:2, borderWidth:2, fill:false },
+      { label:'90-day+', data:[1.2,1.1,1.1,1.0,1.0,0.9,0.9,0.8,0.8,0.7,0.7,0.6], borderColor:'#4e2b62', tension:0.4, pointRadius:2, borderWidth:2, fill:false },
+    ]
+  },
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } }, scales:{ x:{ ticks:{font:{size:10}}, grid:{display:false} }, y:{ ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{color:'#f3f2f1'} } } }
+});
+</script>
+</body>
+</html>
